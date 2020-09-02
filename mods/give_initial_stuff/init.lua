@@ -1,8 +1,8 @@
 -- gave_initial_stuff/init.lua
 
 local stuff_string = minetest.settings:get("initial_stuff") or
-		"default:pick_steel,default:axe_steel,default:shovel_steel," ..
-		"default:torch 99,default:cobble 99"
+		"default:pick_wood,default:sword_wood," ..
+		"default:torch 25,default:apple 15"
 
 give_initial_stuff = {
 	items = {}
@@ -18,7 +18,11 @@ function give_initial_stuff.give(player)
 end
 
 function give_initial_stuff.add(stack)
-	give_initial_stuff.items[#give_initial_stuff.items + 1] = ItemStack(stack)
+	stack = ItemStack(stack)
+	meta = stack:get_meta()
+	meta:set_int("initial", 1)
+	meta:set_string("description", stack:get_definition().description .. " (Initial)")
+	give_initial_stuff.items[#give_initial_stuff.items + 1] = stack
 end
 
 function give_initial_stuff.clear()
