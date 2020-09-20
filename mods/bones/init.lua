@@ -169,6 +169,28 @@ local drop = function(pos, itemstack)
 	end
 end
 
+local drop_stack = function(pos, player_inv, list_name, i)
+	stack = player_inv:get_stack(list_name, i)
+	initial = stack:get_meta():get_int("initial")
+	if not initial or initial ~= 1 then
+		drop(pos, stack)
+		player_inv:set_stack(list_name, i, {})
+	end
+end
+
+local move_stack_to_bones = function(pos, bones_inv, player_inv, list_name, i)
+	stack = player_inv:get_stack(list_name, i)
+	initial = stack:get_meta():get_int("initial")
+	if not initial or initial ~= 1 then
+		if bones_inv:room_for_item("main", stack) then
+			bones_inv:add_item("main", stack)
+		else -- no space left
+			drop(pos, stack)
+		end
+		player_inv:set_stack(list_name, i, {})
+	end
+end
+
 local player_inventory_lists = { "main", "craft" }
 bones.player_inventory_lists = player_inventory_lists
 
@@ -227,9 +249,8 @@ minetest.register_on_dieplayer(function(player)
 	if bones_mode == "drop" then
 		for _, list_name in ipairs(player_inventory_lists) do
 			for i = 1, player_inv:get_size(list_name) do
-				drop(pos, player_inv:get_stack(list_name, i))
+				drop_stack(pos, player_inv, list_name, i)
 			end
-			player_inv:set_list(list_name, {})
 		end
 		drop(pos, ItemStack("bones:bones"))
 		minetest.log("action", player_name .. " dies at " .. pos_string ..
@@ -255,14 +276,8 @@ minetest.register_on_dieplayer(function(player)
 
 	for _, list_name in ipairs(player_inventory_lists) do
 		for i = 1, player_inv:get_size(list_name) do
-			local stack = player_inv:get_stack(list_name, i)
-			if inv:room_for_item("main", stack) then
-				inv:add_item("main", stack)
-			else -- no space left
-				drop(pos, stack)
-			end
+			move_stack_to_bones(pos, inv, player_inv, list_name, i)
 		end
-		player_inv:set_list(list_name, {})
 	end
 
 	meta:set_string("formspec", bones_formspec)
